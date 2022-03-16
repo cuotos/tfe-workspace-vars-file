@@ -10,9 +10,34 @@ type TFClient struct {
 	c *tfe.Client
 }
 
-func (t *TFClient) GetVariablesForWorkspace(workspaceID string) []*tfe.Variable {
-	vars, _ := t.c.Variables.List(context.Background(), workspaceID, tfe.VariableListOptions{})
-	return vars.Items
+func (t *TFClient) GetVariablesForWorkspace(workspaceID string) ([]*tfe.Variable, error) {
+	vars := []*tfe.Variable{}
+
+	opts := tfe.ListOptions{
+		PageSize: 10,
+	}
+
+	for {
+
+		listOptions := tfe.VariableListOptions{
+			ListOptions: opts,
+		}
+
+		vs, err := t.c.Variables.List(context.Background(), workspaceID, listOptions)
+		if err != nil {
+			return nil, err
+		}
+
+		vars = append(vars, vs.Items...)
+
+		if vs.NextPage == 0 {
+			break
+		}
+
+		opts.PageNumber = vs.NextPage
+	}
+
+	return vars, nil
 }
 
 func NewClient(cfg *tfe.Config) (*TFClient, error) {

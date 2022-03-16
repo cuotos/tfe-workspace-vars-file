@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"os"
@@ -18,35 +17,6 @@ func mustGetEnv(v string) string {
 	return value
 }
 
-func getVariablesForWorkspace(tfeClient *tfe.Client, workspaceID string) ([]*tfe.Variable, error) {
-	variables := []*tfe.Variable{}
-
-	opts := tfe.ListOptions{
-		PageSize: 20,
-	}
-
-	for {
-		variablesListOptions := tfe.VariableListOptions{
-			ListOptions: opts,
-		}
-
-		returnedVariables, err := tfeClient.Variables.List(context.Background(), workspaceID, variablesListOptions)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get variables for workspace %v: %w", workspaceID, err)
-		}
-
-		variables = append(variables, returnedVariables.Items...)
-
-		if returnedVariables.NextPage == 0 {
-			break
-		}
-
-		opts.PageNumber = returnedVariables.NextPage
-	}
-
-	return variables, nil
-}
-
 func main() {
 
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
@@ -56,12 +26,12 @@ func main() {
 		Token: token,
 	}
 
-	client, err := tfe.NewClient(config)
+	client, err := NewClient(config)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	vars, err := getVariablesForWorkspace(client, "ws-GT4xCxcD8AfBEwRT")
+	vars, err := client.GetVariablesForWorkspace("ws-GT4xCxcD8AfBEwRT")
 	if err != nil {
 		log.Fatal(err)
 	}

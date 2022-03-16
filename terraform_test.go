@@ -50,16 +50,17 @@ func TestCanGetVarsFromWorkspace(t *testing.T) {
 
 	client := getClientWithMockServer(t)
 	client.c.Variables = MockVariables{
-		ListFunc: func(workspaceID string) *tfe.VariableList {
+		ListFunc: func(workspaceID string, opts tfe.VariableListOptions) *tfe.VariableList {
 			called = true
 			assert.Equal(t, inputWorkspaceId, workspaceID)
 			return &tfe.VariableList{
-				Items: createItemsList(inputVars),
+				Items:      createItemsList(inputVars),
+				Pagination: &tfe.Pagination{NextPage: 0},
 			}
 		},
 	}
 
-	returnedVars := client.GetVariablesForWorkspace(inputWorkspaceId)
+	returnedVars, _ := client.GetVariablesForWorkspace(inputWorkspaceId)
 
 	returnedVarsMap := map[string]string{}
 
@@ -69,6 +70,42 @@ func TestCanGetVarsFromWorkspace(t *testing.T) {
 
 	require.True(t, called)
 	assert.Equal(t, fmt.Sprint(inputVars), fmt.Sprint(returnedVarsMap))
+}
+
+func TestProvidedListOptions(t *testing.T) {
+
+	inputPageSize := 10
+
+	calledCount := 0 // how many times list was called
+
+	client := getClientWithMockServer(t)
+	client.c.Variables = MockVariables{
+		ListFunc: func(workspaceID string, opts tfe.VariableListOptions) *tfe.VariableList {
+			assert.Equal(t, inputPageSize, opts.ListOptions.PageSize)
+
+			listResponse := &tfe.VariableList{
+				Items:      []*tfe.Variable{},
+				Pagination: &tfe.Pagination{},
+			}
+
+			// mocking the behaviour of the tfe response pagination
+			// if the current pagenumber is 4, return next pag = 0 to indicate no more pages
+			if opts.PageNumber == 4 {
+				listResponse.Pagination.NextPage = 0
+			} else {
+				listResponse.Pagination.NextPage = opts.PageNumber + 1
+			}
+
+			calledCount++
+
+			return listResponse
+		},
+	}
+
+	_, _ = client.GetVariablesForWorkspace("workspace")
+
+	// make sure the list function was called twice
+	require.Equal(t, 5, calledCount)
 }
 
 func createItemsList(vars map[string]string) []*tfe.Variable {
@@ -84,12 +121,12 @@ func createItemsList(vars map[string]string) []*tfe.Variable {
 }
 
 type MockVariables struct {
-	ListFunc func(workspaceID string) *tfe.VariableList
+	ListFunc func(workspaceID string, opts tfe.VariableListOptions) *tfe.VariableList
 }
 
 // List all the variables associated with the given workspace.
 func (mv MockVariables) List(ctx context.Context, workspaceID string, options tfe.VariableListOptions) (*tfe.VariableList, error) {
-	return mv.ListFunc(workspaceID), nil
+	return mv.ListFunc(workspaceID, options), nil
 }
 
 // Create is used to create a new variable.
