@@ -107,6 +107,47 @@ func TestProvidedListOptions(t *testing.T) {
 	assert.Equal(t, 10, providedOps.PageSize, "expected a different PageSize in list request pagination")
 }
 
+func TestVarSetsReturnedFromWorkspace(t *testing.T) {
+	tcs := []struct {
+		InputVars       map[string]string
+		InputVarSetVars map[string]string
+		Expected        map[string]string
+	}{
+		{
+			map[string]string{"Var1-key": "Var1-value"},
+			map[string]string{"VarSet1-key": "VarSet1-value"},
+			map[string]string{"Var1-key": "Var1-value", "VarSet1-key": "VarSet1-value"},
+		},
+	}
+
+	for _, tc := range tcs {
+		client := getClientWithMockServer(t)
+
+		client.c.Variables = MockVariables{
+			ListFunc: func(workspaceID string, opts tfe.VariableListOptions) *tfe.VariableList {
+				return &tfe.VariableList{
+					Items: createItemsList(tc.InputVars),
+					Pagination: &tfe.Pagination{
+						NextPage: 0,
+					},
+				}
+			},
+		}
+
+		client.c.VariableSets = MockVariableSets{}
+
+		foundVars, err := client.GetVariablesForWorkspace("workspace1")
+		foundVarsMap := map[string]string{}
+
+		for _, v := range foundVars {
+			foundVarsMap[v.Key] = v.Value
+		}
+
+		require.NoError(t, err)
+		assert.Equal(t, fmt.Sprint(tc.Expected), fmt.Sprint(foundVarsMap))
+	}
+}
+
 func createItemsList(vars map[string]string) []*tfe.Variable {
 	items := []*tfe.Variable{}
 
@@ -145,5 +186,37 @@ func (mv MockVariables) Update(ctx context.Context, workspaceID string, variable
 
 // Delete a variable by its ID.
 func (mv MockVariables) Delete(ctx context.Context, workspaceID string, variableID string) error {
+	panic("not implemented") // TODO: Implement
+}
+
+type MockVariableSets struct{}
+
+// List all the variable sets within an organization.
+func (mvs MockVariableSets) List(ctx context.Context, organization string, options *tfe.VariableSetListOptions) (*tfe.VariableSetList, error) {
+	panic("not implemented") // TODO: Implement
+}
+
+// Create is used to create a new variable set.
+func (mvs MockVariableSets) Create(ctx context.Context, organization string, options *tfe.VariableSetCreateOptions) (*tfe.VariableSet, error) {
+	panic("not implemented") // TODO: Implement
+}
+
+// Read a variable set by its ID.
+func (mvs MockVariableSets) Read(ctx context.Context, variableSetID string, options *tfe.VariableSetReadOptions) (*tfe.VariableSet, error) {
+	panic("not implemented") // TODO: Implement
+}
+
+// Update an existing variable set.
+func (mvs MockVariableSets) Update(ctx context.Context, variableSetID string, options *tfe.VariableSetUpdateOptions) (*tfe.VariableSet, error) {
+	panic("not implemented") // TODO: Implement
+}
+
+// Delete a variable set by ID.
+func (mvs MockVariableSets) Delete(ctx context.Context, variableSetID string) error {
+	panic("not implemented") // TODO: Implement
+}
+
+// Assign a variable set to workspaces
+func (mvs MockVariableSets) Assign(ctx context.Context, variableSetID string, options *tfe.VariableSetAssignOptions) (*tfe.VariableSet, error) {
 	panic("not implemented") // TODO: Implement
 }

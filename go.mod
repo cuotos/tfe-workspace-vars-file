@@ -3,7 +3,7 @@ module vars
 go 1.17
 
 require (
-	github.com/hashicorp/go-tfe v0.26.0
+	github.com/hashicorp/go-tfe v0.26.1-0.20220315195103-ebf29d58bb40
 	github.com/stretchr/testify v1.7.0
 )
 
@@ -12,7 +12,7 @@ require (
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-retryablehttp v0.7.0 // indirect
-	github.com/hashicorp/go-slug v0.7.0 // indirect
+	github.com/hashicorp/go-slug v0.8.0 // indirect
 	github.com/hashicorp/jsonapi v0.0.0-20210826224640-ee7dae0fb22d // indirect
 	github.com/josharian/impl v1.1.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
